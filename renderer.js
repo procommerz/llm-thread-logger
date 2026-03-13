@@ -14,9 +14,14 @@ class LogManager {
         this.tokenCountingInterval = null;
         this.totalTokensIn = 0;
         this.totalTokensOut = 0;
+
+        // Search state
+        this.searchQuery = '';
+        this._searchDebounce = null;
         
         this.setupEventListeners();
         this.initializeTokenCounting();
+        this.initializeSearch();
     }
 
     setupEventListeners() {
@@ -152,6 +157,11 @@ class LogManager {
             }
         });
 
+        // Apply search filter to newly added messages if one is active
+        if (this.searchQuery.length > 2) {
+            this.applyFilter(streamName);
+        }
+
         // Scroll to bottom using a more reliable method
         content.scrollTo({
             top: content.scrollHeight,
@@ -172,6 +182,96 @@ class LogManager {
         newTab.tab.classList.add('active');
         newTab.content.classList.add('active');
         this.activeTab = streamName;
+
+        // Apply current search filter to the newly active tab
+        if (this.searchQuery.length > 2) {
+            this.applyFilter(streamName);
+        }
+    }
+
+    initializeSearch() {
+        const input = document.getElementById('search-input');
+        const clearBtn = document.getElementById('search-clear');
+
+        input.addEventListener('input', () => {
+            const value = input.value;
+            clearBtn.classList.toggle('visible', value.length > 0);
+
+            clearTimeout(this._searchDebounce);
+            this._searchDebounce = setTimeout(() => {
+                this.searchQuery = value;
+                if (this.activeTab) {
+                    this.applyFilter(this.activeTab);
+                }
+            }, 150);
+        });
+
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            clearBtn.classList.remove('visible');
+            this.searchQuery = '';
+            if (this.activeTab) {
+                this.applyFilter(this.activeTab);
+            }
+            input.focus();
+        });
+    }
+
+    escapeHtml(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    highlightText(rawText, query) {
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const parts = rawText.split(new RegExp(`(${escapedQuery})`, 'gi'));
+        return parts.map((part, i) => {
+            const escaped = this.escapeHtml(part);
+            return i % 2 === 1 ? `<mark class="search-highlight">${escaped}</mark>` : escaped;
+        }).join('');
+    }
+
+    applyFilter(streamName) {
+        const { content } = this.tabs.get(streamName);
+        const query = this.searchQuery;
+        const active = query.length > 2;
+        const messages = content.querySelectorAll('.message');
+        let matchCount = 0;
+
+        messages.forEach(message => {
+            const contentEl = message.querySelector('.content');
+            if (!contentEl) return;
+
+            // Always recover raw text via textContent (works after innerHTML was set)
+            const rawText = contentEl.textContent;
+
+            if (!active) {
+                message.style.display = '';
+                contentEl.textContent = rawText;
+            } else {
+                const matches = rawText.toLowerCase().includes(query.toLowerCase());
+                if (matches) {
+                    matchCount++;
+                    message.style.display = '';
+                    contentEl.innerHTML = this.highlightText(rawText, query);
+                } else {
+                    message.style.display = 'none';
+                    contentEl.textContent = rawText;
+                }
+            }
+        });
+
+        const countEl = document.getElementById('search-count');
+        if (active) {
+            countEl.textContent = `${matchCount} / ${messages.length} messages`;
+            countEl.classList.toggle('has-results', matchCount > 0);
+        } else {
+            countEl.textContent = '';
+            countEl.classList.remove('has-results');
+        }
     }
 
     closeTab(streamName) {
