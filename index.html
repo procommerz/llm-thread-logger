@@ -160,8 +160,60 @@
             padding: 7px 10px;
             border-bottom: 1px solid #6272a4;
             display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        #search-row {
+            display: flex;
             align-items: center;
             gap: 8px;
+        }
+        #role-filter-bar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        #role-filter-bar:empty {
+            display: none;
+        }
+        #role-filter-prefix {
+            font-size: 0.78em;
+            color: #6272a4;
+            white-space: nowrap;
+            margin-right: 2px;
+        }
+        .role-filter-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 0.78em;
+            color: #f8f8f2;
+            user-select: none;
+            padding: 2px 7px 2px 5px;
+            border-radius: 3px;
+            border: 1px solid #6272a4;
+            transition: border-color 0.15s, opacity 0.15s;
+        }
+        .role-filter-label:hover {
+            border-color: #bd93f9;
+        }
+        .role-filter-label.disabled {
+            opacity: 0.38;
+        }
+        .role-filter-label input[type="checkbox"] {
+            cursor: pointer;
+            margin: 0;
+            width: 11px;
+            height: 11px;
+            accent-color: #bd93f9;
+        }
+        .role-filter-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
         }
         #search-input {
             flex: 1;
@@ -219,9 +271,12 @@
 <body>
     <div id="tab-container">
         <div id="search-bar">
-            <input type="text" id="search-input" placeholder="Search messages…" autocomplete="off" spellcheck="false" />
-            <button id="search-clear" title="Clear search">✕</button>
-            <span id="search-count"></span>
+            <div id="search-row">
+                <input type="text" id="search-input" placeholder="Search messages…" autocomplete="off" spellcheck="false" />
+                <button id="search-clear" title="Clear search">✕</button>
+                <span id="search-count"></span>
+            </div>
+            <div id="role-filter-bar"></div>
         </div>
         <div id="tabs">
             <div id="token-controls">

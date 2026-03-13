@@ -18,6 +18,10 @@ class LogManager {
         // Search state
         this.searchQuery = '';
         this._searchDebounce = null;
+
+        // Role filter state
+        this.tabRoles = new Map();    // streamName -> Set<role>
+        this.disabledRoles = new Map(); // streamName -> Set<role>
         
         this.setupEventListeners();
         this.initializeTokenCounting();
@@ -82,10 +86,9 @@ class LogManager {
         
 
         // Store references
-        this.tabs.set(streamName, {
-            tab,
-            content
-        });
+        this.tabs.set(streamName, { tab, content });
+        this.tabRoles.set(streamName, new Set());
+        this.disabledRoles.set(streamName, new Set());
 
         // Add to DOM
         this.tabsContainer.appendChild(tab);
@@ -94,6 +97,8 @@ class LogManager {
 
     addMessagesToTab(streamName, messages) {
         const { content } = this.tabs.get(streamName);
+        const tabRolesSet = this.tabRoles.get(streamName);
+        let newRoleAdded = false;
         
         messages.forEach(message => {
             const messageElement = document.createElement('div');
@@ -104,6 +109,11 @@ class LogManager {
                 messageRole = 'assistant';
             } else if (['human'].includes(messageRole)) {
                 messageRole = 'user';
+            }
+
+            if (!tabRolesSet.has(messageRole)) {
+                tabRolesSet.add(messageRole);
+                newRoleAdded = true;
             }
 
             // Generate unique message ID
@@ -157,8 +167,14 @@ class LogManager {
             }
         });
 
-        // Apply search filter to newly added messages if one is active
-        if (this.searchQuery.length > 2) {
+        // Rebuild role filter bar if a new role appeared in the active tab
+        if (newRoleAdded && this.activeTab === streamName) {
+            this.rebuildRoleFilterBar(streamName);
+        }
+
+        // Apply filters if search is active or any roles are disabled
+        const hasDisabledRoles = (this.disabledRoles.get(streamName) || new Set()).size > 0;
+        if (this.searchQuery.length > 2 || hasDisabledRoles) {
             this.applyFilter(streamName);
         }
 
@@ -183,10 +199,69 @@ class LogManager {
         newTab.content.classList.add('active');
         this.activeTab = streamName;
 
-        // Apply current search filter to the newly active tab
-        if (this.searchQuery.length > 2) {
+        this.rebuildRoleFilterBar(streamName);
+
+        // Apply current filter to the newly active tab
+        const hasDisabledRoles = (this.disabledRoles.get(streamName) || new Set()).size > 0;
+        if (this.searchQuery.length > 2 || hasDisabledRoles) {
             this.applyFilter(streamName);
         }
+    }
+
+    getRoleColor(role) {
+        const colors = {
+            system: '#5b89ad',
+            assistant: '#8be9fd',
+            user: '#50fa7b',
+        };
+        return colors[role] || '#bd93f9';
+    }
+
+    rebuildRoleFilterBar(streamName) {
+        const bar = document.getElementById('role-filter-bar');
+        bar.innerHTML = '';
+
+        if (!streamName) return;
+
+        const roles = this.tabRoles.get(streamName);
+        if (!roles || roles.size === 0) return;
+
+        const disabled = this.disabledRoles.get(streamName);
+
+        const prefix = document.createElement('span');
+        prefix.id = 'role-filter-prefix';
+        prefix.textContent = 'Roles:';
+        bar.appendChild(prefix);
+
+        [...roles].sort().forEach(role => {
+            const label = document.createElement('label');
+            label.className = 'role-filter-label' + (disabled.has(role) ? ' disabled' : '');
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = !disabled.has(role);
+
+            const dot = document.createElement('span');
+            dot.className = 'role-filter-dot';
+            dot.style.background = this.getRoleColor(role);
+
+            label.appendChild(checkbox);
+            label.appendChild(dot);
+            label.appendChild(document.createTextNode(role));
+
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    disabled.delete(role);
+                    label.classList.remove('disabled');
+                } else {
+                    disabled.add(role);
+                    label.classList.add('disabled');
+                }
+                this.applyFilter(streamName);
+            });
+
+            bar.appendChild(label);
+        });
     }
 
     initializeSearch() {
@@ -239,6 +314,7 @@ class LogManager {
         const query = this.searchQuery;
         const active = query.length > 2;
         const messages = content.querySelectorAll('.message');
+        const disabled = this.disabledRoles.get(streamName) || new Set();
         let matchCount = 0;
 
         messages.forEach(message => {
@@ -247,6 +323,13 @@ class LogManager {
 
             // Always recover raw text via textContent (works after innerHTML was set)
             const rawText = contentEl.textContent;
+            const roleHidden = disabled.has(message.dataset.role);
+
+            if (roleHidden) {
+                message.style.display = 'none';
+                contentEl.textContent = rawText;
+                return;
+            }
 
             if (!active) {
                 message.style.display = '';
@@ -283,6 +366,8 @@ class LogManager {
         
         // Remove from storage
         this.tabs.delete(streamName);
+        this.tabRoles.delete(streamName);
+        this.disabledRoles.delete(streamName);
         
         // If this was the active tab, activate another one
         if (this.activeTab === streamName) {
@@ -290,6 +375,8 @@ class LogManager {
             if (this.tabs.size > 0) {
                 const nextStreamName = this.tabs.keys().next().value;
                 this.activateTab(nextStreamName);
+            } else {
+                document.getElementById('role-filter-bar').innerHTML = '';
             }
         }
     }
