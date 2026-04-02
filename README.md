@@ -11,25 +11,38 @@ A real-time multi-tab log stream viewer for LLM completion chats. This Electron 
 - Tab management (create, switch, close)
 - No persistence (in-memory only)
 
-## Installation
+## Install and Run
 
-1. Clone the repository:
+Clone the repository:
+
 ```bash
-git clone <repository-url>
-cd io.wrobo.gpt-thread-log-manager
+git clone https://github.com/procommerz/llm-thread-logger.git
+cd llm-thread-logger
 ```
 
-2. Install dependencies:
+### Via Docker + XQuartz (recommended)
+
+You need XQuartz for this (must be running). 
+
+Run `defaults write org.xquartz.X11 nolisten_tcp -bool false` and restart XQuartz.
+
+Then run `sh run-docker-xquartz.sh` in the project folder - this should launch the Electron app in a container and show a tunnelled app window on your desktop.
+
+
+### Directly on Your Host
+
+Install dependencies:
 ```bash
 npm install
 ```
 
-3. Start the application:
+Start the application:
 ```bash
-npm start
+npm run start
 ```
 
 The application will start and listen for log messages on `http://localhost:9797`.
+
 
 ## Usage
 
@@ -42,7 +55,7 @@ Send log messages to the application using HTTP POST requests to `http://localho
 
 - `streamName` (required): String identifying the chat stream. This will be used as the tab name.
 - `messages` (required): Array of message objects, each containing:
-  - `role` (required): String indicating the message sender (e.g., "user", "assistant")
+  - `role` (required): String indicating the message sender (e.g., "user", "assistant" - can be anything, but some default roles have built-in color codes)
   - `content` (required): String or array of strings containing the message content
 
 ### Example Using cURL

@@ -1,0 +1,8 @@
+node_modules
+.git
+.gitignore
+.DS_Store
+.env
+.env.*
+gpt-log-viewer-dist
+gpt-log-viewer-dist.zip

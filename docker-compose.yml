@@ -1,0 +1,28 @@
+services:
+  gpt-log-viewer:
+    build: .
+    ports:
+      - "9797:9797"
+    environment:
+      # ── Display forwarding ────────────────────────────────────────────────
+      # macOS (XQuartz) — default profile:
+      #   run-docker-quartz.sh starts a socat bridge that re-exposes the
+      #   XQuartz Unix socket over TCP on all interfaces, so the container
+      #   can reach it via Docker Desktop's host alias on port 6000 (:0).
+      #
+      # Linux:
+      #   Change to: DISPLAY=${DISPLAY}
+      #   and uncomment the /tmp/.X11-unix volume mount below.
+      #
+      # Headless (no window on host):
+      #   Remove the DISPLAY line entirely; Xvfb starts automatically inside
+      #   the container so the app still runs and port 9797 stays reachable.
+      - DISPLAY=host.docker.internal:0
+    volumes:
+      # Live-reload: mount source so changes are picked up without rebuilding.
+      # node_modules stays inside the container image.
+      - .:/app
+      - /app/node_modules
+
+      # Linux X11 socket — uncomment on Linux hosts:
+      # - /tmp/.X11-unix:/tmp/.X11-unix
