@@ -2,6 +2,9 @@
 
 A real-time multi-tab log stream viewer for LLM completion chats. This Electron application allows you to monitor multiple LLM chat streams simultaneously in different tabs, with a clean and modern interface.
 
+![LLM Log Stream Viewer Recording](https://github.com/procommerz/llm-thread-logger/blob/main/demo-recording.gif?raw=true)
+
+
 ## Features
 
 - Real-time log streaming via HTTP endpoint
@@ -10,6 +13,7 @@ A real-time multi-tab log stream viewer for LLM completion chats. This Electron 
 - Clean message display with role-based styling
 - Tab management (create, switch, close)
 - No persistence (in-memory only)
+
 
 ## Install and Run
 
@@ -37,7 +41,7 @@ Install dependencies:
 npm install
 ```
 
-Start the application:
+Start the application in dev mode:
 ```bash
 npm run start
 ```
@@ -47,9 +51,14 @@ The application will start and listen for log messages on `http://localhost:9797
 
 ## Usage
 
+ℹ️ Usage tip: Press Esc to close a loging tab or Cmd/Ctrl-R to reload the app and clear everything.
+
+
 ### Sending Log Messages
 
 Send log messages to the application using HTTP POST requests to `http://localhost:9797/log`. 
+
+See `send-test-message.sh` for a working example.
 
 
 #### Request Format
