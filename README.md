@@ -20,9 +20,10 @@ git clone https://github.com/procommerz/llm-thread-logger.git
 cd llm-thread-logger
 ```
 
-### Via Docker + XQuartz (recommended)
+### Via Docker + XQuartz (recommended for MacOS)
 
-You need XQuartz for this (must be running). 
+You need XQuartz for this (must be running). Download from https://www.xquartz.org/ 
+or via `brew install --cask xquartz`
 
 Run `defaults write org.xquartz.X11 nolisten_tcp -bool false` and restart XQuartz.
 
