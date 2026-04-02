@@ -8,6 +8,9 @@ class LogManager {
         this.contentContainer = document.getElementById('content');
         this.messageIdCounter = 0;
         
+        // Autoscroll
+        this.autoscrollEnabled = true;
+
         // Token counting properties
         this.tokenCountingEnabled = false;
         this.uncountedMessages = new Set();
@@ -24,6 +27,7 @@ class LogManager {
         this.disabledRoles = new Map(); // streamName -> Set<role>
         
         this.setupEventListeners();
+        this.initializeAutoscroll();
         this.initializeTokenCounting();
         this.initializeSearch();
     }
@@ -178,11 +182,12 @@ class LogManager {
             this.applyFilter(streamName);
         }
 
-        // Scroll to bottom using a more reliable method
-        content.scrollTo({
-            top: content.scrollHeight,
-            behavior: 'smooth'
-        });
+        if (this.autoscrollEnabled) {
+            content.scrollTo({
+                top: content.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
     }
 
     activateTab(streamName) {
@@ -378,6 +383,16 @@ class LogManager {
             } else {
                 document.getElementById('role-filter-bar').innerHTML = '';
             }
+        }
+    }
+
+    initializeAutoscroll() {
+        const toggle = document.getElementById('autoscroll-toggle');
+        if (toggle) {
+            this.autoscrollEnabled = toggle.checked;
+            toggle.addEventListener('change', (e) => {
+                this.autoscrollEnabled = e.target.checked;
+            });
         }
     }
 
