@@ -53,7 +53,10 @@ class LogManager {
         }
         
         this.addMessagesToTab(streamName, messages);
-        this.activateTab(streamName);
+
+        if (this.autoscrollEnabled) {
+            this.activateTab(streamName);
+        }
     }
 
     createNewTab(streamName) {

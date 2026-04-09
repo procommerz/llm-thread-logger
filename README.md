@@ -96,7 +96,7 @@ curl -X POST http://localhost:9797/log \
 - **Closing Tabs**: Click the × button on a tab to close it
 - **Auto-Focus**: New messages automatically focus their respective tab
 - **Message Display**: Messages are displayed with different styles for user and assistant roles
-- **Auto-Scroll**: The view automatically scrolls to the latest messages
+- **Auto-focus**: The view automatically scrolls to the latest messages
 
 
 ## Notes
