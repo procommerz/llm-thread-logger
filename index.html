@@ -53,16 +53,54 @@
             position: relative;
             padding-bottom: 20px;
         }
-        .log-container {
+        .log-pane {
             display: none;
+            position: relative;
+            height: 100%;
+            background: #282a36;
+        }
+        .log-pane.active {
+            display: block;
+        }
+        .log-container {
             height: 100%;
             overflow-y: auto;
-            padding: 20px;
+            padding: 20px 36px 20px 20px;
             background: #282a36;
             color: #f8f8f2;
         }
-        .log-container.active {
+        .search-hit-map {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            bottom: 8px;
+            width: 14px;
+            display: none;
+            border-radius: 999px;
+            background: rgba(98, 114, 164, 0.16);
+            pointer-events: auto;
+            z-index: 1;
+        }
+        .search-hit-map.active {
             display: block;
+        }
+        .search-hit-marker {
+            position: absolute;
+            left: 2px;
+            width: 10px;
+            height: 4px;
+            padding: 0;
+            border: 0;
+            border-radius: 999px;
+            background: #f1fa8c;
+            box-shadow: 0 0 0 1px rgba(40, 42, 54, 0.55);
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .search-hit-marker:hover,
+        .search-hit-marker:focus-visible {
+            background: #fff5a4;
+            outline: none;
         }
         .message {
             margin-bottom: 16px;

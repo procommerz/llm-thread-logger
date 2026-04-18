@@ -11,6 +11,7 @@ A real-time multi-tab log stream viewer for LLM completion chats. This Electron 
 - Multi-tab interface for monitoring different chat streams
 - Automatic tab creation and focus for new streams
 - Clean message display with role-based styling
+- Search with filtering, highlighting, and clickable hit markers on the log scrollbar
 - Structured event-based trace logging with foldable debug panels
 - Tab management (create, switch, close)
 - No persistence (in-memory only)
@@ -157,6 +158,7 @@ For local testing, see:
 - **Auto-Focus**: New messages automatically focus their respective tab
 - **Message Display**: Messages are displayed with different styles for user and assistant roles
 - **Auto-focus**: The view automatically scrolls to the latest messages
+- **Search**: The search bar filters and highlights matching entries, and matching positions are shown as clickable yellow markers along the right side of the log view
 
 
 ## Notes

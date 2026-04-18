@@ -69,10 +69,27 @@ class LogManager {
             <span class="close-btn">X</span>
         `;
 
+        const pane = document.createElement('div');
+        pane.className = 'log-pane';
+        pane.dataset.streamName = streamName;
+
         const content = document.createElement('div');
         content.className = 'log-container';
         content.dataset.streamName = streamName;
         content.style.paddingBottom = '48px';
+
+        const searchHitMap = document.createElement('div');
+        searchHitMap.className = 'search-hit-map';
+        searchHitMap.setAttribute('aria-hidden', 'true');
+
+        pane.appendChild(content);
+        pane.appendChild(searchHitMap);
+
+        pane.addEventListener('toggle', () => {
+            if (this.activeTab === streamName && this.searchQuery.trim().length > 2) {
+                this.updateSearchHitMap(streamName);
+            }
+        }, true);
 
         tab.addEventListener('click', (e) => {
             if (e.button !== 1 && !e.target.classList.contains('close-btn')) {
@@ -86,12 +103,12 @@ class LogManager {
             this.closeTab(streamName);
         });
 
-        this.tabs.set(streamName, { tab, content });
+        this.tabs.set(streamName, { tab, pane, content, searchHitMap });
         this.tabRoles.set(streamName, new Set());
         this.disabledRoles.set(streamName, new Set());
 
         this.tabsContainer.appendChild(tab);
-        this.contentContainer.appendChild(content);
+        this.contentContainer.appendChild(pane);
     }
 
     createEntryId(prefix) {
@@ -639,12 +656,12 @@ class LogManager {
         if (this.activeTab) {
             const currentTab = this.tabs.get(this.activeTab);
             currentTab.tab.classList.remove('active');
-            currentTab.content.classList.remove('active');
+            currentTab.pane.classList.remove('active');
         }
 
         const newTab = this.tabs.get(streamName);
         newTab.tab.classList.add('active');
-        newTab.content.classList.add('active');
+        newTab.pane.classList.add('active');
         this.activeTab = streamName;
 
         this.rebuildRoleFilterBar(streamName);
@@ -652,6 +669,8 @@ class LogManager {
         const hasDisabledRoles = (this.disabledRoles.get(streamName) || new Set()).size > 0;
         if (this.searchQuery.length > 2 || hasDisabledRoles) {
             this.applyFilter(streamName);
+        } else {
+            this.updateSearchHitMap(streamName);
         }
     }
 
@@ -814,13 +833,65 @@ class LogManager {
             countEl.textContent = '';
             countEl.classList.remove('has-results');
         }
+
+        this.updateSearchHitMap(streamName);
+    }
+
+    updateSearchHitMap(streamName) {
+        const tabData = this.tabs.get(streamName);
+        if (!tabData) {
+            return;
+        }
+
+        const { content, searchHitMap } = tabData;
+        const query = this.searchQuery.trim();
+        const searchActive = query.length > 2;
+
+        searchHitMap.innerHTML = '';
+        searchHitMap.classList.toggle('active', searchActive);
+
+        if (!searchActive) {
+            return;
+        }
+
+        const visibleMatches = Array.from(content.querySelectorAll('.entry')).filter(entry => entry.style.display !== 'none');
+        if (visibleMatches.length === 0) {
+            return;
+        }
+
+        const railHeight = searchHitMap.clientHeight;
+        const maxScrollTop = Math.max(content.scrollHeight - content.clientHeight, 0);
+        const markerHeight = 4;
+
+        visibleMatches.forEach((entry, index) => {
+            const marker = document.createElement('button');
+            marker.type = 'button';
+            marker.className = 'search-hit-marker';
+            marker.title = `Jump to search result ${index + 1}`;
+            marker.setAttribute('aria-label', `Jump to search result ${index + 1}`);
+
+            const targetScrollTop = maxScrollTop > 0 ? Math.min(entry.offsetTop, maxScrollTop) : 0;
+            const top = maxScrollTop > 0
+                ? (targetScrollTop / maxScrollTop) * Math.max(railHeight - markerHeight, 0)
+                : 0;
+            marker.style.top = `${top}px`;
+
+            marker.addEventListener('click', () => {
+                content.scrollTo({
+                    top: Math.max(entry.offsetTop - 12, 0),
+                    behavior: 'smooth'
+                });
+            });
+
+            searchHitMap.appendChild(marker);
+        });
     }
 
     closeTab(streamName) {
-        const { tab, content } = this.tabs.get(streamName);
+        const { tab, pane } = this.tabs.get(streamName);
 
         tab.remove();
-        content.remove();
+        pane.remove();
 
         this.tabs.delete(streamName);
         this.tabRoles.delete(streamName);
@@ -988,6 +1059,12 @@ class LogManager {
     }
 }
 
+window.addEventListener('resize', () => {
+    if (window.logManager && window.logManager.activeTab) {
+        window.logManager.updateSearchHitMap(window.logManager.activeTab);
+    }
+});
+
 window.addEventListener('DOMContentLoaded', () => {
-    new LogManager();
+    window.logManager = new LogManager();
 });
