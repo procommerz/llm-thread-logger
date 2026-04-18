@@ -1,0 +1,542 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/event.schema.json",
+  "title": "LLM Trace Event",
+  "description": "JSON Schema for a single event object sent inside the /log event envelope.",
+  "oneOf": [
+    {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseEvent"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventType": {
+              "const": "assistant_message_start"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseEvent"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventType": {
+              "const": "assistant_message_end"
+            },
+            "rawText": {
+              "type": "string"
+            },
+            "rawThinking": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "rawText",
+            "rawThinking"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseEvent"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventType": {
+              "const": "tool_start"
+            },
+            "toolName": {
+              "type": "string"
+            },
+            "toolCallId": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/jsonValue"
+              }
+            }
+          },
+          "required": [
+            "toolName",
+            "toolCallId",
+            "args"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseEvent"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventType": {
+              "const": "tool_end"
+            },
+            "toolName": {
+              "type": "string"
+            },
+            "toolCallId": {
+              "type": "string"
+            },
+            "isError": {
+              "type": "boolean"
+            },
+            "result": {
+              "$ref": "#/$defs/jsonValue"
+            }
+          },
+          "required": [
+            "toolName",
+            "toolCallId",
+            "isError",
+            "result"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseEvent"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventType": {
+              "const": "model_request"
+            },
+            "requestIndex": {
+              "type": "integer"
+            },
+            "provider": {
+              "type": "string"
+            },
+            "modelId": {
+              "type": "string"
+            },
+            "modelApi": {
+              "type": "string"
+            },
+            "payload": {
+              "$ref": "#/$defs/modelRequestPayload"
+            }
+          },
+          "required": [
+            "requestIndex",
+            "provider",
+            "modelId",
+            "modelApi",
+            "payload"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  ],
+  "$defs": {
+    "baseEvent": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "enum": [
+            "assistant_message_start",
+            "assistant_message_end",
+            "tool_start",
+            "tool_end",
+            "model_request"
+          ]
+        },
+        "ts": {
+          "type": "integer"
+        },
+        "streamName": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "sessionKey": {
+          "type": "string"
+        },
+        "runId": {
+          "type": "string"
+        },
+        "agentId": {
+          "type": "string"
+        },
+        "seq": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "eventType",
+        "ts",
+        "streamName",
+        "sessionId",
+        "sessionKey",
+        "runId",
+        "agentId",
+        "seq"
+      ]
+    },
+    "jsonValue": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/jsonValue"
+          }
+        }
+      ]
+    },
+    "textContentPart": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "text"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "content": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/textContentPart"
+          }
+        }
+      ]
+    },
+    "assistantToolCall": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "function"
+        },
+        "function": {
+          "$ref": "#/$defs/toolCallFunction"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "function"
+      ],
+      "additionalProperties": false
+    },
+    "toolCallFunction": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "completionMessage": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "role": {
+              "const": "system"
+            },
+            "content": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/textContentPart"
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "role",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "role": {
+              "const": "user"
+            },
+            "content": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/textContentPart"
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "role",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "role": {
+              "const": "assistant"
+            },
+            "content": {
+              "$ref": "#/$defs/content"
+            },
+            "tool_calls": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/assistantToolCall"
+              }
+            }
+          },
+          "required": [
+            "role",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "role": {
+              "const": "tool"
+            },
+            "content": {
+              "$ref": "#/$defs/content"
+            },
+            "tool_call_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "role",
+            "content",
+            "tool_call_id"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "jsonSchemaNode": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/jsonSchemaNode"
+          }
+        },
+        "patternProperties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/jsonSchemaNode"
+          }
+        },
+        "items": {
+          "$ref": "#/$defs/jsonSchemaNode"
+        },
+        "enum": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue"
+          }
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "minLength": {
+          "type": "integer"
+        },
+        "maxLength": {
+          "type": "integer"
+        },
+        "maxItems": {
+          "type": "integer"
+        },
+        "default": {
+          "$ref": "#/$defs/jsonValue"
+        }
+      },
+      "additionalProperties": true
+    },
+    "functionToolDefinition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "function"
+        },
+        "function": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "parameters": {
+              "$ref": "#/$defs/jsonSchemaNode"
+            },
+            "strict": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "parameters",
+            "strict"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "function"
+      ],
+      "additionalProperties": false
+    },
+    "modelRequestPayload": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/completionMessage"
+          }
+        },
+        "stream": {
+          "type": "boolean"
+        },
+        "store": {
+          "type": "boolean"
+        },
+        "max_completion_tokens": {
+          "type": "integer"
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/functionToolDefinition"
+          }
+        }
+      },
+      "required": [
+        "model",
+        "messages",
+        "stream",
+        "store",
+        "max_completion_tokens",
+        "tools"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
