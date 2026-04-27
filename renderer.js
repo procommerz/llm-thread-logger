@@ -1051,7 +1051,7 @@ class LogManager {
         let tokensIn = 0;
         let tokensOut = 0;
 
-        const inRoles = ['system', 'user'];
+        const inRoles = ['system', 'user', 'human'];
         const outRoles = ['assistant', 'tool', 'ai'];
 
         const countedMessages = document.querySelectorAll('.message[data-counted="true"]');
