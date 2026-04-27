@@ -587,12 +587,20 @@ class LogManager {
     }
 
     formatMessageContent(content) {
-        if (Array.isArray(content)) {
-            return content.join('\n');
-        }
-
         if (content == null) {
             return '';
+        }
+
+        if (typeof content === 'string') {
+            return content;
+        }
+
+        if (Array.isArray(content)) {
+            return content.map(item => this.formatContentPart(item)).join('\n');
+        }
+
+        if (typeof content === 'object') {
+            return this.stringifyJson(content);
         }
 
         return String(content);
@@ -608,20 +616,35 @@ class LogManager {
         }
 
         if (Array.isArray(content)) {
-            return content.map(item => {
-                if (item && typeof item === 'object' && item.type === 'text') {
-                    return item.text || '';
-                }
-
-                return this.stringifyJson(item);
-            }).join('\n');
+            return content.map(item => this.formatContentPart(item)).join('\n');
         }
 
         return this.stringifyJson(content);
     }
 
+    formatContentPart(item) {
+        if (item == null) {
+            return '';
+        }
+
+        if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+            return String(item);
+        }
+
+        if (typeof item === 'object' && item.type === 'text' && typeof item.text === 'string') {
+            return item.text;
+        }
+
+        return this.stringifyJson(item);
+    }
+
     stringifyJson(value) {
-        return JSON.stringify(value, null, 2);
+        try {
+            const json = JSON.stringify(value, null, 2);
+            return json === undefined ? String(value) : json;
+        } catch (error) {
+            return String(value);
+        }
     }
 
     collectSearchText(value) {

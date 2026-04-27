@@ -51,6 +51,51 @@ function normalizeStructuredContent(content) {
   return parts;
 }
 
+function stringifyJson(value) {
+  try {
+    const json = JSON.stringify(value, null, 2);
+    return json === undefined ? String(value) : json;
+  } catch (error) {
+    return String(value);
+  }
+}
+
+function formatContentPart(part) {
+  if (part === null || part === undefined) {
+    return '';
+  }
+
+  if (typeof part === 'string' || typeof part === 'number' || typeof part === 'boolean') {
+    return String(part);
+  }
+
+  if (isPlainObject(part) && part.type === 'text' && typeof part.text === 'string') {
+    return part.text;
+  }
+
+  return stringifyJson(part);
+}
+
+function formatTokenContent(content) {
+  if (content === null || content === undefined) {
+    return '';
+  }
+
+  if (typeof content === 'string') {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content.map(formatContentPart).join('\n');
+  }
+
+  if (typeof content === 'object') {
+    return stringifyJson(content);
+  }
+
+  return String(content);
+}
+
 function normalizeJsonValue(value) {
   if (
     value === null ||
@@ -417,9 +462,7 @@ ipcMain.handle('count-tokens', async (event, messages) => {
 
     const results = messages.map(msg => {
       try {
-        const content = Array.isArray(msg.content) 
-          ? msg.content.join('\n') 
-          : msg.content;
+        const content = formatTokenContent(msg.content);
         const tokens = encoder.encode(content);
         return {
           id: msg.id,
